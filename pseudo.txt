@@ -1,0 +1,112 @@
+
+- store API
+- set up basic functionalities
+  - controllers (get all products)
+  - route
+  - import route in app.js
+  - the middleware
+    - notfound js
+    - error js (import express sync error)
+
+- connect it to db
+  - create a dotenv file and paste the connect url there
+  - create a db folder
+    - create a productdb file
+      - import mongoose
+      - create a connectDB function
+        - mongoose.connect(url)
+        - export
+  - in app.js
+    - import dotenv config
+    - use process.env.mongo inside start function
+
+- set up products database
+ - create a model folder
+ - create a product file
+ - import mongoose
+ - create a new instance of the schema and declare the databse structure
+ - structure
+   - product name: string
+   - price: number
+   - company: string
+   - rating: float
+   - createdat: date
+   featured: boolean
+- fill up the database with product details through the create product functionality
+  - createProduct controllers
+  - pass product, price, company, rating, created at through req.body
+  - use model.create ({name:name})
+
+- populate databse with local database
+  - create a connecttoDB file
+  - import dotenv/config, connectDB, product json, model
+  - create a function
+    - invoke process.env.mongourri
+    - enter control c in terminal then node productdatafile
+    - delete existing data with model.deleteMany({})
+    - model.create(productjson)
+
+- return only products whose featred value is functionalities
+  - create a filter function in the controllers file
+  - get the entered query via req.query
+  - use filter method to find item.featured === req.query
+    - if not throw an error
+
+- implemen limi
+  - ge limi from he query
+  - afer he if fields creae a condiion ha checks if limi exist
+    - if yes, pass he inpu inside he selec method
+    - if no, pass 10 as he defauk value
+
+- get product by name
+  - get user input via req.params
+  - if product.exist (name)
+    - no = doesnt exist
+    - yes 
+      - product.find(name)
+      
+- Authemtiication
+  - create a user model schema
+    - name, email, role, defaut is seller.
+  - create a register endpoint
+    - collect name, email, and password, and confirm password
+      - if email already exist throw error
+      - if password and confirm doesnt match throw error
+      - else, navigate to login page
+  - login page
+    - get name, email, and password
+      - check if they exist
+        = no
+          - create an acct
+        = yes
+        -  check 
+        - token
+          - set role = seller
+          - get id , role, and name (payload)
+          - expired in 10 days
+          - set secret key using process.env.Secret (set secret in dotenv)
+  - before user can get to create product
+    - creae an Authemtiication route
+      - get user token via req.headerauthorization
+      - if token doesnt exist throw error
+      - check if token bearer
+        - no = throw error
+        - yes
+          - split token input and remove bearer
+          - use jwt.verify to verify token
+            - pass token and secret
+          - if yes user, role = the decoded value
+          - No = error
+          - next
+    - pass Authemtiication file in the create product route
+- edit product
+  - create an edit logic
+  - in route it is a patch method
+  - get product ID via req.body;
+  - use .findByid method
+
+- errors
+  - import http-status-cde
+  - Custom errors
+    - extends from built in error
+  - error handler an instance of Custom error
