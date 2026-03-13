@@ -3,7 +3,7 @@ import { connectDB } from './db/store-products.js'
 import { Product } from './model/productModel.js'
 import { datas } from './products.js'
 
-const connection = async ()=>{
+const connection = async (req, res)=>{
     try {
         await connectDB(process.env.MONGO_URL)
         await Product.deleteMany()
@@ -12,11 +12,10 @@ const connection = async ()=>{
         
         process.exit(0)
     } catch (error) {
-        console.log(error);
+        res.status(400).json({success:false, msg:error})
         
     }    
 }
 
 connection();
 
-// run node connecData.js

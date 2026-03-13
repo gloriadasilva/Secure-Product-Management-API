@@ -24,7 +24,6 @@ const userSchema = new mongoose.Schema({
         type:String,
         required:[true, "Password cannot be empty"],
         select: false
-        // select hides paasword by default in queries
     },
     role:{
         type:String,

@@ -110,3 +110,24 @@
   - Custom errors
     - extends from built in error
   - error handler an instance of Custom error
+
+- new create product by seller
+  - add an owner field
+    - type: mongoose.Schema.Types.ObjectId,
+    - ref: 'User
+    - required: true
+
+- fix bug
+
+- only seller who created a product can edit or delete
+  - get ID via req.user
+  - if id == product.owner
+    - edit
+  else
+  - error
+- work on refresh token
+  - create a refresh controllers
+  
+  - create a route
+- work on admin in RBAC
+

@@ -28,6 +28,11 @@ const productSchema = new mongoose.Schema({
     },
     featured:{
         type: Boolean,
+    },
+    owner:{
+        type: mongoose.Schema.Types.ObjectId,
+        ref:'User',
+        required: true
     }
 })
 

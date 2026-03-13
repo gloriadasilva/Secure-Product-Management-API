@@ -11,10 +11,12 @@ export const auth = (req, res, next)=>{
     const token = tokenVal.split(' ')[1];
     try {
         const decoded = jwt.verify(token, process.env.JSON_SECRET)
-        const {name, role} = decoded;
-        req.user = {name, role}
+        req.user = {_id:decoded.userId, name:decoded.name, role:decoded.role}
         next();
     } catch (error) {
+        if(error.name === 'TokenExpiredError'){
+            return res.status(401).json({success:false, msg:"Token expired."})
+        }
         throw new BadRequest ("Token is invalid")
 
     }

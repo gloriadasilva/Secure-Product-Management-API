@@ -1,60 +1,10 @@
-import jwt from "jsonwebtoken"
 import dotenv from 'dotenv';
 import { Product } from "../model/productModel.js";
-import { User } from "../model/userModel.js";
 import BadRequest from "../errors/badRequest.js";
-import unAuthorized from "../errors/unauthorized.js";
+import unAuthorized from '../errors/unauthorized.js';
 
 dotenv.config();
 
-const createUser = async (req, res)=>{
-    const {name, email, password, confirm} = req.body;
-    
-    const findUser = await User.exists({email:email});    
-    if(findUser){
-        throw new BadRequest ("Email already exist")
-    }
-    if (password !== confirm){
-        throw new BadRequest("Password must match!")
-    }    
-    const userCreated = await User.create({
-        name:name,
-        email: email,
-    })    
-    res.status(201).json({userCreated})
-}
-
-const login = async (req, res)=>{
-    const {email, password} = req.body;        
-    
-    if(!email || !password){
-        throw new unAuthorized("Username or password cannot be empty")
-    }    
-
-    const user = await User.findOne({email}).select('+password')
-    if(!user){
-        throw new BadRequest("Invalid request!")
-    }
-
-    console.log(user);
-    console.log(user.password);
-    console.log(process.env.JSON_SECRET);
-
-    const isMatch = await user.comparePassword(String(password))
-    console.log(isMatch);
-    if(!isMatch){
-        throw new unAuthorized("Incorrect password.")
-    }
-    
-    const Payload = {
-      userId:user._id,
-      name:user.name,
-      role:user.role
-    }
-    const token = jwt.sign(Payload, process.env.JSON_SECRET, {expiresIn:'15d'})        
-    res.status(200).json({success:true, msg:token})
-
-}
 
 const getAllProducts = async (req, res)=>{
 
@@ -63,130 +13,154 @@ const getAllProducts = async (req, res)=>{
 }
 
 const createProduct = async(req, res)=>{
-    try {
-        console.log(req.user.role);
-    
+    try {    
         const {name,price, company, rating, createdAt, featured} = req.body;
 
        if (!company){
           return res.send({success:false, msg:"company field is invalid"})
        }    
 
-       const newProducts = await Product.create({name:name,price:price, company:company, rating:rating, createdAt:createdAt, featured:featured})       
+       const newProducts = await Product.create({name:name,price:price, company:company, rating:rating, createdAt:createdAt, featured:featured, owner:req.user._id
+
+       })       
        return res.status(201).json({success:true, data:newProducts})
     } catch (error) {
           res.status(400).json({success:false, msg:error})
        }
 }
 
-const editProduct = async(req, res)=>{
+const editProduct = async(req, res)=>{    
     const {id} = req.params;
-    if(id.length <=23){
-        throw new BadRequest("Invalid ID")
+    const {name, price, rating} = req.body;    
+    
+    // find id and update
+    if(id.length <=23 || id.length >24){
+        return res.status(400).json({success:false, msg:"Invalid ID"})
     }
-
-    const edit = await Product.findById(id);
-    if(edit){    
-      res.status(201).json({success:true, msg:edit})
+    const findToEdit = await Product.findById(id)
+    if(!findToEdit){
+        throw new BadRequest("Product not found!")
     }
-    throw new BadRequest("Invalid ID")
-
+    
+    if(findToEdit.owner != req.user._id){
+        throw new unAuthorized("Cannot edit this product")
+    }
+    const product = await Product.findByIdAndUpdate(id, {name:name, price:price, rating:rating}, {returnDocument:"after"})
+        
+    return res.status(200).json({success:true, data:product})
 }
 const deleteProduct = async(req, res)=>{
     const {id} = req.params;
-    console.log(id.length <=23);
-    
-    if(id.length <=23){
+    if(id.length <=23 || id.length>24){
         throw new BadRequest("Invalid ID")
     }
-    const deleted = await Product.findByIdAndDelete(id);
-    if(edit){    
-      res.status(201).json({success:true, msg:`Item with ID ${id} deleted`})
+    const product = await Product.findById(id);
+    if(!product){
+        throw new BadRequest("Product not found!")
     }
-    throw new BadRequest("Invalid ID")
+    if (product.owner !=req.user._id){
+        throw new unAuthorized("Cannot delete this product!")
+    }
+    await Product.findByIdAndDelete(id)
+    res.status(200).json({ success: true, msg: `Item with ID ${id} deleted` })
 
 }
 
 const getProductByName = async (req, res)=>{
     const {name} = req.params;
-
+     
     const findProduct = await Product.find({name:{$regex:name, $options:'i'}})
     if (findProduct.length == 0){
-        res.status(200).json({success:true, msg:"No product found"})
+        return res.status(200).json({success:true, msg:"No product found"})
     }    
     res.status(200).json({success:true, msg:findProduct})
     
 }
 
 const filter = async (req, res)=>{
-    const {nameItem, featuredItem, companyItem, sortByCompany,sortByPrice,fields, numericFilters} = req.query
+    const {findName, findByPrice, findFeature, sortPrice, sortRatings, fields, numFilters} = req.query;
 
-    const queryObject = {}
+    let selectFields = ""
+    let objectsQuery = {}
+    let sortResult = {}
 
-    if(featuredItem){
-        queryObject.featured = featuredItem
+    if(findName){
+        objectsQuery.name = {$regex: findName, $options:"i"}
     }
-    if(nameItem){ 
-        queryObject.name = {$regex: nameItem, $options:'i'}
+    if (findByPrice){
+        objectsQuery.price = findByPrice
     }
-    if(companyItem){
-        queryObject.company = {$regex: companyItem, $options:'i'}
-    }
-
-        // add numeric filters
-    if(numericFilters){
-        const NumOperators = {
-          '<':'$lt',
-          '>':'$gt',
-          '=':'$eq',
-          '<=':'$lte',
-          '>=':'$gte'
-       }
-      const regEx = /\b(<|>|=|<=|>=)\b/g
-      let replaceOp = numericFilters.replace(regEx, (match)=>{          
-          return `-${NumOperators[match]}-`
-      })      
-      const options = ['price', 'rating']
-      
-      const toArray = replaceOp.split(',').forEach((item)=>{
-           const [field, op, value] = item.split('-');     
-
-           if(options.includes(field)){       
-              queryObject[field] = {[op]:Number(value)}
-           }
-       })      
+    if (findFeature){
+        objectsQuery.featured = findFeature
+    }   
+    
+   
+    if(numFilters){
+        if(numFilters.includes('price')|| numFilters.includes('rating')){
+          const match = numFilters.match(/(\w+)(>=|<=|>|<|=)(\d+)/);   
+          if(!match){
+            return res.status(400).json({success:false, msg: "Invalid operator sign"})
+          }              
+          const operatorMap = {
+             ">": "$gt",
+             "<": "$lt",
+             ">=": "$gte",
+             "<=": "$lte",
+             "=":"$eq"
+           };
+           const mongooseQuery = {
+                [match[1]]: {[operatorMap[match[2]]]: Number(match[3]),
+                },
+           };           
+          objectsQuery = {...objectsQuery, ...mongooseQuery}
+        }
+        else{
+            return res.status(401).json({success: false, msg:"Value must be price or ratings"})
+        }
     }    
     
-    let result  = Product.find(queryObject)
-    
-    // sorts by ascending or descending order
+    if (sortPrice){
+        if (sortPrice == 'asc' || sortPrice== 'desc'){
+            sortResult.price = sortPrice
+        }
+        else{
+            return res.status(401).json({success:false, msg:"value must be 'asc' or 'desc'"})
+        }
+    } 
+    if (sortRatings){
+        if (sortRatings == 'asc' || sortRatings== 'desc'){
+            sortResult.ratings = sortRatings
+        }
+        else{
+            return res.status(401).json({success:false, msg:"value must be 'asc' or 'desc'"})
+        }
+    } 
+   // retrieve only selected fields
+   if (fields){
+    selectFields = fields.split(',').join(' ')
+   }
+   
+   // limits
+   const limit = Number(req.query.limit) || 10
+   
+   // pages
+   const skip = req.query.skip|| 0
+   try {
+       const products = await Product
+       .find(objectsQuery)
+       .sort(sortResult)
+       .select(selectFields)
+       .limit(limit)
+       .skip(skip)       
 
-    if(sortByPrice){
-        result = result.sort({price:sortByPrice})
-    }
-    if(sortByCompany){
-      result = result.sort({company:sortByCompany})
-    }
+       return res.status(200).json({success:true, products, length:products.length})
 
-    // select only necessar product data
-
-    if(fields){
-        const listToSort = fields.split(',').join(',');        
-        result = result.select(listToSort)        
-    }
-
-    // add limit functionality
-    const limits = req.query.limits || 10
-    const pages = req.query.pages  || 1
-    const skips = (pages-1)*limits     
-    
-    const products = await result.skip(skips).limit(limits)
-    return res.status(200).json({products, length:products.length})
+   } catch (error) {
+    return res.status(400).json({success:false, msg:error})
+   }
     
 }
 export {
-    createUser,
-    login,
     getAllProducts,
     createProduct,
     editProduct,
