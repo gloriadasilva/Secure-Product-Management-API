@@ -3,13 +3,13 @@ A secure product management API that allows you to manage your product listings 
 
 ## How to Install
 
-**Step 1**: Create a folder in your local machine's VS Code
+**Step 1**: Create a folder in your local machine and open it in your VS Code
 
-**Step 2**: Enter  
+**Step 2**: Enter `https://github.com/gloriadasilva/Secure-Product-Management-API.git` in your VS Code termina
 
-**Step 3**: Enter cd your-project-folder-name
+**Step 3**: Enter `cd your-project-folder-name`
 
-**Step 4**: Enter npm install to install all packages and dependencies.
+**Step 4**: Enter `npm install` to install all packages and dependencies.
 
 ## NexStore Routes
 
