@@ -4,6 +4,6 @@ import { userProfile } from '../controllers/userProfile.js';
 import { auth } from '../middleware/authentication.js';
 const profileRoute = express.Router();
 
-profileRoute.get('/user/profile',auth, userProfile)
+profileRoute.get('/user/profile/:id',auth, userProfile)
 
 export default profileRoute

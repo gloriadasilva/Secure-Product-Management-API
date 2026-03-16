@@ -2,8 +2,9 @@ import { User } from "../model/userModel.js"
 
 export const userProfile = async (req, res)=>{
 
-  
-  const findUser = await User.findById(req.user._id).select('-password')    
+  const {id} = req.params;
+
+  const findUser = await User.findById(id).select('-password')    
   if(!findUser){
     return res.status(400).json({success:false, msg:"User not found"})
   }
