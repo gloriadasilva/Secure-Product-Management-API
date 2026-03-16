@@ -5,13 +5,11 @@ import unAuthorized from '../errors/unauthorized.js';
 
 dotenv.config();
 
-
 const getAllProducts = async (req, res)=>{
 
     const allProducts = await Product.find({}).sort({company:'asc', price:'asc'}) 
     res.status(200).json({success:true, allProducts, length:allProducts.length})
 }
-
 const createProduct = async(req, res)=>{
     try {    
         const {name,price, company, rating, createdAt, featured} = req.body;
