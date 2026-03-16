@@ -15,6 +15,10 @@ const app = new express();
 
 app.use(express.json())
 app.use(cookieParser())
+
+app.get('/', (req, res)=>{
+    res.send('Store API is running ...')
+})
 app.use('/api/v1', loginroutes)
 app.use('/api/v1', profileRoute)
 app.use('/api/v1', routes)
