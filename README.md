@@ -1,6 +1,8 @@
 # NexStore API
 A secure product management API that allows you to manage your product listings and reach your customers. Create and manage your product listings while your customers can view and filter all available products.
 
+live API Documenation: [NexStore API](https://nexstore.docs.buildwithfern.com/api-reference/overview/introduction)
+
 ## How to Install
 
 **Step 1**: Create a folder in your local machine and open it in your VS Code
